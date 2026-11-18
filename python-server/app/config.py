@@ -10,8 +10,11 @@ class Settings(BaseSettings):
     ai_provider: str = "gemini"
     gemini_api_key: str = ""
     groq_api_key: str = ""
-    gemini_model: str = "gemini-3.6-flash"
-    groq_model: str = "openai/gpt-oss-20b"
+    # Use real, currently supported model identifiers.
+    # Gemini: see https://ai.google.dev/gemini-api/docs/models
+    # Groq:   see https://console.groq.com/docs/models
+    gemini_model: str = "gemini-1.5-flash"
+    groq_model: str = "llama3-8b-8192"
     tavily_api_key: str = ""
     openweather_api_key: str = ""
     smtp_host: str = "smtp.gmail.com"
@@ -21,12 +24,13 @@ class Settings(BaseSettings):
     smtp_from_email: str = ""
     password_reset_secret: str = ""
     secure_cookies: bool = False
+    # Comma-separated list of allowed CORS origins.
+    # Do NOT hardcode local-network IPs here; set CORS_ORIGINS in .env instead.
     cors_origins: str = (
-    "http://localhost:8080,"
-    "http://192.168.1.80:8080,"
-    "http://localhost:5000,"
-    "https://travel-app-vtce-qutszefm.onslate.in,"
-    "https://travel-app-my31.onrender.com"
+        "http://localhost:8080,"
+        "http://localhost:5000,"
+        "https://travel-app-vtce-qutszefm.onslate.in,"
+        "https://travel-app-my31.onrender.com"
     )
 
     @property
@@ -38,9 +42,22 @@ class Settings(BaseSettings):
 
     @property
     def selected_ai(self) -> tuple[str, str, str]:
+        """Return (api_key, base_url, model_name) for the configured provider.
+
+        Uses the model names from settings so that overriding GEMINI_MODEL or
+        GROQ_MODEL in .env is actually respected at runtime.
+        """
         if self.selected_provider == "groq":
-            return self.groq_api_key, "https://api.groq.com/openai/v1", "openai/gpt-oss-20b"
-        return self.gemini_api_key, "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-3.6-flash"
+            return (
+                self.groq_api_key,
+                "https://api.groq.com/openai/v1",
+                self.groq_model,          # ← was hardcoded; now reads the setting
+            )
+        return (
+            self.gemini_api_key,
+            "https://generativelanguage.googleapis.com/v1beta/openai",
+            self.gemini_model,            # ← was hardcoded; now reads the setting
+        )
 
     @property
     def origins(self) -> list[str]:

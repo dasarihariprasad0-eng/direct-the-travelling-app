@@ -13,10 +13,12 @@ export function researchFlights({
   origin,
   destination,
   departureDate,
+  language,
 }: {
   origin: string;
   destination: string;
   departureDate: string | null;
+  language: "en" | "hi" | "te";
 }): Promise<FlightResearch> {
   return apiRequest("/flight-research", {
     method: "POST",
@@ -24,6 +26,7 @@ export function researchFlights({
       origin,
       destination,
       departure_date: departureDate,
+      language,
     },
   });
 }

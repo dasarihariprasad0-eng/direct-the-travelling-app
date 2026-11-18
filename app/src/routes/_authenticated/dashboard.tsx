@@ -35,6 +35,8 @@ import { toast } from "sonner";
 import { apiRequest, clearSessionToken, notifyAuthChange } from "@/lib/api";
 import { listMyTrips, type TripCard } from "@/lib/travel.api";
 import { researchFlights } from "@/lib/flight-research.api";
+import { LanguageSwitcher } from "@/components/LanguageProvider";
+import { useLanguage } from "@/lib/language-context";
 
 const EMPTY_TRIPS: TripCard[] = [];
 
@@ -53,6 +55,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function DashboardPage() {
+  const { language, t } = useLanguage();
   const { profile } = useRouteContext({ from: "/_authenticated" });
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["my-trips"],
@@ -68,13 +71,14 @@ function DashboardPage() {
         origin: flightOrigin.trim(),
         destination: flightDestination.trim(),
         departureDate: flightDate || null,
+        language,
       }),
   });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const trips = data ?? EMPTY_TRIPS;
   const stats = useMemo(() => getTripStats(trips), [trips]);
-  const chartData = useMemo(() => getChartData(trips), [trips]);
+  const chartData = useMemo(() => getChartData(trips, language), [trips, language]);
   async function signOut() {
     await queryClient.cancelQueries();
     try {
@@ -84,7 +88,7 @@ function DashboardPage() {
       notifyAuthChange();
       navigate({ to: "/auth", replace: true });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not sign out.");
+      toast.error(error instanceof Error ? error.message : t("Could not sign out."));
     }
   }
 
@@ -100,7 +104,7 @@ function DashboardPage() {
           </span>
           <button
             className="crystal-mobile-close"
-            aria-label="Close navigation"
+            aria-label={t("Close navigation")}
             onClick={() => setMobileNavOpen(false)}
           >
             <X size={20} />
@@ -109,36 +113,36 @@ function DashboardPage() {
 
         <div className="crystal-workspace">
           <span className="crystal-workspace-icon">D</span>
-          <span className="crystal-workspace-name">My journeys</span>
+          <span className="crystal-workspace-name">{t("My journeys")}</span>
           <ChevronDown size={14} />
         </div>
 
-        <p className="crystal-nav-label">Workspace</p>
-        <nav className="crystal-nav" aria-label="Main navigation">
+        <p className="crystal-nav-label">{t("Workspace")}</p>
+        <nav className="crystal-nav" aria-label={t("Main navigation")}>
           <Link to="/dashboard" className="crystal-nav-link is-active">
             <LayoutDashboard size={17} />
-            <span>Overview</span>
+            <span>{t("Overview")}</span>
             <span className="crystal-nav-indicator" />
           </Link>
           <Link to="/discover" className="crystal-nav-link">
             <Users size={17} />
-            <span>Travelers</span>
+            <span>{t("Travelers")}</span>
           </Link>
           <Link to="/trips" className="crystal-nav-link">
             <Map size={17} />
-            <span>Group trips</span>
+            <span>{t("Group trips")}</span>
           </Link>
           <Link to="/ideas" className="crystal-nav-link">
             <Lightbulb size={17} />
-            <span>Explore ideas</span>
+            <span>{t("Explore ideas")}</span>
           </Link>
         </nav>
 
-        <p className="crystal-nav-label crystal-nav-label-spaced">Personal</p>
-        <nav className="crystal-nav" aria-label="Personal navigation">
+        <p className="crystal-nav-label crystal-nav-label-spaced">{t("Personal")}</p>
+        <nav className="crystal-nav" aria-label={t("Personal navigation")}>
           <Link to="/profile" className="crystal-nav-link">
             <Globe2 size={17} />
-            <span>Travel preferences</span>
+            <span>{t("Travel preferences")}</span>
           </Link>
         </nav>
 
@@ -147,9 +151,9 @@ function DashboardPage() {
           <span className="crystal-tip-icon">
             <Lightbulb size={17} />
           </span>
-          <p>Good trips start with good company.</p>
+          <p>{t("Good trips start with good company.")}</p>
           <Link to="/discover">
-            Find your people <ArrowRight size={13} />
+            {t("Find your people")} <ArrowRight size={13} />
           </Link>
         </div>
         <div className="crystal-sidebar-footer">
@@ -157,17 +161,17 @@ function DashboardPage() {
             {(profile?.display_name || "T").slice(0, 1).toUpperCase()}
           </span>
           <div className="crystal-user-meta">
-            <strong>{profile?.display_name || "Traveler"}</strong>
-            <span>{profile?.home_city || "Travel enthusiast"}</span>
+            <strong>{profile?.display_name || t("Traveler")}</strong>
+            <span>{profile?.home_city || t("Travel enthusiast")}</span>
           </div>
           <button
             className="crystal-signout"
             type="button"
             onClick={() => void signOut()}
-            title="Sign out and switch accounts"
+            title={t("Sign out and switch accounts")}
           >
             <LogOut size={16} />
-            <span>Sign out</span>
+            <span>{t("Sign out")}</span>
           </button>
         </div>
       </aside>
@@ -175,7 +179,7 @@ function DashboardPage() {
       {mobileNavOpen ? (
         <button
           className="crystal-mobile-backdrop"
-          aria-label="Close navigation"
+          aria-label={t("Close navigation")}
           onClick={() => setMobileNavOpen(false)}
         />
       ) : null}
@@ -184,25 +188,26 @@ function DashboardPage() {
         <header className="crystal-topbar">
           <button
             className="crystal-mobile-menu"
-            aria-label="Open navigation"
+            aria-label={t("Open navigation")}
             onClick={() => setMobileNavOpen(true)}
           >
             <Menu size={20} />
           </button>
           <div className="crystal-breadcrumb">
-            <span>Workspace</span>
+            <span>{t("Workspace")}</span>
             <span className="crystal-breadcrumb-slash">/</span>
-            <strong>Overview</strong>
+            <strong>{t("Overview")}</strong>
           </div>
           <div className="crystal-topbar-actions">
+            <LanguageSwitcher />
             <Link to="/trips" className="crystal-search-link">
               <Search size={16} />
-              <span>Find a trip</span>
+              <span>{t("Find a trip")}</span>
               <kbd>↵</kbd>
             </Link>
             <span className="crystal-topbar-divider" />
             <span className="crystal-date">
-              <CalendarDays size={15} /> {formatToday()}
+              <CalendarDays size={15} /> {formatToday(language)}
             </span>
             <span className="crystal-avatar crystal-avatar-small">
               {(profile?.display_name || "T").slice(0, 1).toUpperCase()}
@@ -214,16 +219,16 @@ function DashboardPage() {
           <section
             className="crystal-hero"
             style={{ backgroundImage: `url("${heroImage}")` }}
-            aria-label="Plan a peaceful escape"
+            aria-label={t("Plan a peaceful escape")}
           >
             <div className="crystal-hero-copy">
-              <p className="crystal-eyebrow">A SLOWER WAY TO SEE THE WORLD</p>
-              <h1>Find your somewhere.</h1>
-              <p>Thoughtful journeys, beautiful places, and room to breathe.</p>
+              <p className="crystal-eyebrow">{t("A slower way to see the world")}</p>
+              <h1>{t("Find your somewhere.")}</h1>
+              <p>{t("Thoughtful journeys, beautiful places, and room to breathe.")}</p>
             </div>
             <form
               className="crystal-flight-widget"
-              aria-label="Search flight prices"
+              aria-label={t("Search flight prices")}
               onSubmit={(event) => {
                 event.preventDefault();
                 if (
@@ -236,11 +241,11 @@ function DashboardPage() {
               }}
             >
               <label>
-                <span>FROM</span>
+                <span>{t("From")}</span>
                 <input
-                  aria-label="Departure city"
+                  aria-label={t("Departure city")}
                   name="origin"
-                  placeholder="Your city"
+                  placeholder={t("Your city")}
                   value={flightOrigin}
                   onChange={(event) => setFlightOrigin(event.target.value)}
                   required
@@ -250,20 +255,20 @@ function DashboardPage() {
                 <ArrowDownUp size={15} />
               </span>
               <label>
-                <span>TO</span>
+                <span>{t("To")}</span>
                 <input
-                  aria-label="Destination"
+                  aria-label={t("Destination")}
                   name="destination"
-                  placeholder="Where to?"
+                  placeholder={t("Where to?")}
                   value={flightDestination}
                   onChange={(event) => setFlightDestination(event.target.value)}
                   required
                 />
               </label>
               <label className="crystal-flight-date">
-                <span>WHEN</span>
+                <span>{t("When")}</span>
                 <input
-                  aria-label="Departure date"
+                  aria-label={t("Departure date")}
                   name="date"
                   type="date"
                   value={flightDate}
@@ -284,24 +289,24 @@ function DashboardPage() {
                 ) : (
                   <Search size={16} />
                 )}
-                <span>{flightResearch.isPending ? "Analyzing fares…" : "Analyze fares"}</span>
+                <span>{flightResearch.isPending ? t("Analyzing fares…") : t("Analyze fares")}</span>
               </button>
             </form>
             <p className="crystal-flight-note">
-              We’ll research external flight information and summarize the sources here.
+              {t("We’ll research external flight information and summarize the sources here.")}
             </p>
             <Link to="/trips" className="crystal-hero-trip-link">
-              Planning with friends? Create a group trip <ArrowRight size={14} />
+              {t("Planning with friends? Create a group trip")} <ArrowRight size={14} />
             </Link>
           </section>
 
           {flightResearch.isError ? (
             <section className="crystal-flight-research is-error" role="alert">
-              <h2>Flight research is unavailable</h2>
+              <h2>{t("Flight research is unavailable")}</h2>
               <p>
                 {flightResearch.error instanceof Error
                   ? flightResearch.error.message
-                  : "We could not analyze flight information right now."}
+                  : t("We could not analyze flight information right now.")}
               </p>
             </section>
           ) : null}
@@ -309,16 +314,20 @@ function DashboardPage() {
             <section className="crystal-flight-research" aria-live="polite">
               <div className="crystal-flight-research-heading">
                 <div>
-                  <p className="crystal-panel-kicker">EXTERNAL FLIGHT RESEARCH</p>
+                  <p className="crystal-panel-kicker">{t("External flight research")}</p>
                   <h2>
                     {flightOrigin.trim()} <ArrowRight size={15} /> {flightDestination.trim()}
                   </h2>
-                  {flightDate ? <p>Travel date: {flightDate}</p> : null}
+                  {flightDate ? (
+                    <p>
+                      {t("Travel date")}: {flightDate}
+                    </p>
+                  ) : null}
                 </div>
                 <button
                   type="button"
                   onClick={() => flightResearch.reset()}
-                  aria-label="Dismiss flight research"
+                  aria-label={t("Dismiss flight research")}
                 >
                   <X size={17} />
                 </button>
@@ -330,70 +339,73 @@ function DashboardPage() {
                     <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">
                       <strong>{source.title}</strong>
                       {source.excerpt ? <span>{source.excerpt}</span> : null}
-                      <small>View source</small>
+                      <small>{t("View source")}</small>
                     </a>
                   ))}
                 </div>
               ) : null}
               <p className="crystal-flight-disclaimer">
-                Research summaries are not live fare quotes. Confirm the final fare, baggage rules,
-                availability, and fees directly with each provider.
+                {t(
+                  "Research summaries are not live fare quotes. Confirm the final fare, baggage rules, availability, and fees directly with each provider.",
+                )}
               </p>
             </section>
           ) : null}
 
           {isError ? (
             <div className="crystal-error" role="alert">
-              <span>We couldn’t load your trips just now.</span>
+              <span>{t("We couldn’t load your trips just now.")}</span>
               <button onClick={() => void refetch()}>
-                Try again <ArrowRight size={14} />
+                {t("Try again")} <ArrowRight size={14} />
               </button>
             </div>
           ) : null}
 
-          <section className="crystal-stats" aria-label="Travel metrics">
+          <section className="crystal-stats" aria-label={t("Travel metrics")}>
             <MetricCard
-              label="Your group trips"
+              label={t("Your group trips")}
               value={isLoading ? "—" : String(stats.tripCount)}
               detail={
                 stats.tripCount === 1
-                  ? "One journey in your collection"
-                  : "Journeys in your collection"
+                  ? t("One journey in your collection")
+                  : t("Journeys in your collection")
               }
               icon={<Plane size={18} />}
               highlight={
-                stats.upcomingCount ? `${stats.upcomingCount} upcoming` : "Ready when you are"
+                stats.upcomingCount
+                  ? `${stats.upcomingCount} ${t("upcoming")}`
+                  : t("Ready when you are")
               }
             />
             <MetricCard
-              label="Travel companions"
+              label={t("Travel companions")}
               value={isLoading ? "—" : String(stats.travelerCount)}
-              detail="People across your groups"
+              detail={t("People across your groups")}
               icon={<Users size={18} />}
-              highlight="Better together"
+              highlight={t("Better together")}
             />
             <MetricCard
-              label="Places on your map"
+              label={t("Places on your map")}
               value={isLoading ? "—" : String(stats.destinationCount)}
-              detail="Unique destinations across trips"
+              detail={t("Unique destinations across trips")}
               icon={<MapPin size={18} />}
-              highlight={stats.destinationCount ? "Keep exploring" : "A world to discover"}
+              highlight={stats.destinationCount ? t("Keep exploring") : t("A world to discover")}
             />
           </section>
 
           <section className="crystal-panel crystal-chart-panel">
             <div className="crystal-panel-heading">
               <div>
-                <p className="crystal-panel-kicker">YOUR TRAVEL PULSE</p>
-                <h2>Journeys through the year</h2>
+                <p className="crystal-panel-kicker">{t("Your travel pulse")}</p>
+                <h2>{t("Journeys through the year")}</h2>
               </div>
               <span className="crystal-chart-legend">
-                <i /> Trips planned
+                <i /> {t("Trips planned")}
               </span>
             </div>
             {isLoading ? (
               <div className="crystal-chart-loading">
-                <Loader2 size={20} className="crystal-spin" /> Gathering your journeys…
+                <Loader2 size={20} className="crystal-spin" /> {t("Gathering your journeys…")}
               </div>
             ) : (
               <>
@@ -431,7 +443,7 @@ function DashboardPage() {
                       <Area
                         type="monotone"
                         dataKey="trips"
-                        name="Trips planned"
+                        name={t("Trips planned")}
                         stroke="#81927b"
                         strokeWidth={2.5}
                         fill="url(#crystal-area-fill)"
@@ -441,7 +453,9 @@ function DashboardPage() {
                   </ResponsiveContainer>
                 </div>
                 {!trips.length ? (
-                  <p className="crystal-chart-empty">Your trip activity will take shape here.</p>
+                  <p className="crystal-chart-empty">
+                    {t("Your trip activity will take shape here.")}
+                  </p>
                 ) : null}
               </>
             )}
@@ -450,30 +464,30 @@ function DashboardPage() {
           <section className="crystal-panel crystal-activity-panel">
             <div className="crystal-panel-heading crystal-activity-heading">
               <div>
-                <p className="crystal-panel-kicker">TRIP ACTIVITY</p>
-                <h2>Your trips</h2>
+                <p className="crystal-panel-kicker">{t("Trip activity")}</p>
+                <h2>{t("Your trips")}</h2>
               </div>
               <Link to="/trips" className="crystal-text-link">
-                View all trips <ArrowRight size={15} />
+                {t("View all trips")} <ArrowRight size={15} />
               </Link>
             </div>
 
             {isLoading ? (
               <div className="crystal-activity-loading">
-                <Loader2 size={19} className="crystal-spin" /> Loading your travel plans…
+                <Loader2 size={19} className="crystal-spin" /> {t("Loading your travel plans…")}
               </div>
             ) : trips.length ? (
               <div className="crystal-table-wrap">
                 <table className="crystal-table">
                   <thead>
                     <tr>
-                      <th>TRIP</th>
-                      <th>DESTINATION</th>
-                      <th>DATES</th>
-                      <th>TRAVELERS</th>
-                      <th>STATUS</th>
+                      <th>{t("Trip")}</th>
+                      <th>{t("Destination")}</th>
+                      <th>{t("Dates")}</th>
+                      <th>{t("Travelers")}</th>
+                      <th>{t("Status")}</th>
                       <th>
-                        <span className="sr-only">Open trip</span>
+                        <span className="sr-only">{t("Open trip")}</span>
                       </th>
                     </tr>
                   </thead>
@@ -490,20 +504,20 @@ function DashboardPage() {
                   <Map size={19} />
                 </span>
                 <div>
-                  <strong>Your next great story starts here.</strong>
-                  <p>You haven’t joined or created a group trip yet.</p>
+                  <strong>{t("Your next great story starts here.")}</strong>
+                  <p>{t("You haven’t joined or created a group trip yet.")}</p>
                 </div>
                 <Link to="/trips" className="crystal-empty-link">
-                  Explore trips <ArrowRight size={14} />
+                  {t("Explore trips")} <ArrowRight size={14} />
                 </Link>
               </div>
             )}
           </section>
 
           <footer className="crystal-footer">
-            <span>Made for the journeys that bring us closer.</span>
+            <span>{t("Made for the journeys that bring us closer.")}</span>
             <Link to="/ideas">
-              Find a little inspiration <ArrowUpRight size={13} />
+              {t("Find a little inspiration")} <ArrowUpRight size={13} />
             </Link>
           </footer>
         </div>
@@ -544,6 +558,7 @@ function MetricCard({
 }
 
 function TripRow({ trip }: { trip: TripCard }) {
+  const { t, language } = useLanguage();
   const status = trip.status.toLowerCase();
   const isComplete = status === "completed" || status === "complete";
   const isActive = status === "open" || status === "active" || status === "planning";
@@ -553,7 +568,7 @@ function TripRow({ trip }: { trip: TripCard }) {
       <td>
         <span className="crystal-trip-title">{trip.title}</span>
         <span className="crystal-trip-owner">
-          {trip.isOwner ? "Organized by you" : "Joined trip"}
+          {trip.isOwner ? t("Organized by you") : t("Joined trip")}
         </span>
       </td>
       <td>
@@ -564,7 +579,7 @@ function TripRow({ trip }: { trip: TripCard }) {
       </td>
       <td>
         <span className="crystal-trip-dates">
-          {formatDateRange(trip.start_date, trip.end_date)}
+          {formatDateRange(trip.start_date, trip.end_date, language)}
         </span>
       </td>
       <td>
@@ -578,7 +593,7 @@ function TripRow({ trip }: { trip: TripCard }) {
           className={`crystal-status${isComplete ? " is-complete" : isActive ? " is-active" : ""}`}
         >
           <i />
-          {capitalize(trip.status)}
+          {t(capitalize(trip.status.replaceAll("_", " ")))}
         </span>
       </td>
       <td>
@@ -586,7 +601,7 @@ function TripRow({ trip }: { trip: TripCard }) {
           to="/trips"
           search={{ trip: trip.id }}
           className="crystal-row-link"
-          aria-label={`Open ${trip.title}`}
+          aria-label={`${t("Open")} ${trip.title}`}
         >
           <ArrowUpRight size={16} />
         </Link>
@@ -604,13 +619,14 @@ function TripChartTooltip({
   payload?: Array<{ value: number }>;
   label?: string;
 }) {
+  const { t } = useLanguage();
   const value = payload?.[0]?.value;
   if (!active || value === undefined) return null;
   return (
     <div className="crystal-tooltip">
       <span>{label}</span>
       <strong>
-        {value} {value === 1 ? "trip" : "trips"}
+        {value} {value === 1 ? t("trip") : t("trips")}
       </strong>
     </div>
   );
@@ -635,7 +651,7 @@ function getTripStats(trips: TripCard[]) {
   };
 }
 
-function getChartData(trips: TripCard[]) {
+function getChartData(trips: TripCard[], language: string) {
   const now = new Date();
   const currentMonth = now.getFullYear() * 12 + now.getMonth();
   const tripMonths = trips
@@ -649,7 +665,7 @@ function getChartData(trips: TripCard[]) {
     const date = new Date(Math.floor(monthIndex / 12), monthIndex % 12, 1);
     return {
       key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
-      label: new Intl.DateTimeFormat("en", { month: "short", year: "2-digit" }).format(date),
+      label: new Intl.DateTimeFormat(language, { month: "short", year: "2-digit" }).format(date),
       trips: 0,
     };
   });
@@ -665,13 +681,13 @@ function getChartData(trips: TripCard[]) {
   return months;
 }
 
-function formatDateRange(start: string, end: string) {
+function formatDateRange(start: string, end: string, language: string) {
   const startDate = new Date(`${start}T00:00:00`);
   const endDate = new Date(`${end}T00:00:00`);
   const sameMonth =
     startDate.getMonth() === endDate.getMonth() &&
     startDate.getFullYear() === endDate.getFullYear();
-  const dateFormatter = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
+  const dateFormatter = new Intl.DateTimeFormat(language, { month: "short", day: "numeric" });
   const startLabel = dateFormatter.format(startDate);
   if (sameMonth) {
     return `${startLabel}–${endDate.getDate()}, ${endDate.getFullYear()}`;
@@ -684,10 +700,12 @@ function formatDateRange(start: string, end: string) {
     : `${startLabel}, ${startYear} – ${endLabel}, ${endYear}`;
 }
 
-function formatToday() {
-  return new Intl.DateTimeFormat("en", { weekday: "short", month: "short", day: "numeric" }).format(
-    new Date(),
-  );
+function formatToday(language: string) {
+  return new Intl.DateTimeFormat(language, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(new Date());
 }
 
 function startOfToday() {

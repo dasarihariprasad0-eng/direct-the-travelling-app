@@ -1,16 +1,20 @@
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
 
 export function ChipGroup({
   options,
   value,
   onChange,
   multi = false,
+  formatOption,
 }: {
   options: readonly string[];
   value: string[] | string | null;
   onChange: (next: string[] | string) => void;
   multi?: boolean;
+  formatOption?: (option: string) => string;
 }) {
+  const { t } = useLanguage();
   const selected = Array.isArray(value) ? value : value ? [value] : [];
 
   function toggle(option: string) {
@@ -40,7 +44,7 @@ export function ChipGroup({
                 : "border-border/70 bg-card/65 text-muted-foreground shadow-sm hover:-translate-y-0.5 hover:border-primary/35 hover:bg-background/80 hover:text-foreground hover:shadow-ridge",
             )}
           >
-            {option}
+            {formatOption ? formatOption(option) : t(option)}
           </button>
         );
       })}

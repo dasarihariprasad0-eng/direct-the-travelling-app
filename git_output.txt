@@ -1,0 +1,63 @@
+=== REMOTES ===
+origin	https://github.com/dasarihariprasad0-eng/travel-app.git (fetch)
+origin	https://github.com/dasarihariprasad0-eng/travel-app.git (push)
+
+=== STATUS ===
+On branch main
+Your branch is behind 'origin/main' by 5 commits, and can be fast-forwarded.
+  (use "git pull" to update your local branch)
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   app/index.html
+	modified:   app/public/robots.txt
+	modified:   app/src/components/AppHeader.tsx
+	modified:   app/src/components/BookingOptions.tsx
+	modified:   app/src/components/ChipGroup.tsx
+	modified:   app/src/components/TravelPageBanner.tsx
+	modified:   app/src/lib/flight-research.api.ts
+	modified:   app/src/lib/recommend.api.ts
+	modified:   app/src/lib/travel.api.ts
+	modified:   app/src/router.tsx
+	modified:   app/src/routes/__root.tsx
+	modified:   app/src/routes/_authenticated/dashboard.tsx
+	modified:   app/src/routes/_authenticated/discover.tsx
+	modified:   app/src/routes/_authenticated/ideas.tsx
+	modified:   app/src/routes/_authenticated/profile.tsx
+	modified:   app/src/routes/_authenticated/trips.tsx
+	modified:   app/src/routes/auth.tsx
+	modified:   app/src/routes/index.tsx
+	modified:   app/src/styles.css
+	modified:   app/tests/smoke.test.ts
+	deleted:    ngrok.zip
+	modified:   python-server/.env.example
+	modified:   python-server/SETUP.md
+	modified:   python-server/app/ai.py
+	modified:   python-server/app/config.py
+	modified:   python-server/app/db.py
+	modified:   python-server/app/main.py
+	modified:   python-server/app/matching.py
+	modified:   python-server/app/tavily.py
+	modified:   python-server/app/weather.py
+	modified:   python-server/requirements.txt
+	modified:   python-server/tests/test_app.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	app/public/sitemap.xml
+	app/src/components/LanguageProvider.tsx
+	app/src/components/TravelPathways.tsx
+	app/src/components/TripAITab.tsx
+	app/src/components/TripChat.tsx
+	app/src/components/TripGroupTab.tsx
+	app/src/lib/language-context.ts
+	env_check.json
+	git_check.py
+	python-server/requirements-dev.txt
+	server_status.json
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+=== BRANCH ===
+* main

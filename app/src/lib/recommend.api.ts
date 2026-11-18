@@ -8,6 +8,7 @@ export type Recommendation = {
     name: string;
     category: string;
     why_visit: string;
+    sources?: { title: string; url: string }[];
   }[];
   best_for: string[];
   estimated_total_per_person?: string;
@@ -53,6 +54,7 @@ export async function recommendDestinations({
     travelers: number;
     roomShare: number;
     preferredDestinations: string[];
+    language: "en" | "hi" | "te";
   };
 }): Promise<{
   recommendations: Recommendation[];
@@ -72,6 +74,7 @@ export async function recommendDestinations({
       travelers: data.travelers,
       room_share: data.roomShare,
       preferred_destinations: data.preferredDestinations,
+      language: data.language,
     },
   });
 }

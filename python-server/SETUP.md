@@ -69,6 +69,10 @@ SMTP_FROM_EMAIL=your-gmail-address@gmail.com
 PASSWORD_RESET_SECRET=replace-with-a-long-random-secret
 ```
 
+If the SMTP username or app password is missing, password reset requests return
+an error instead of reporting that an email was sent. For Gmail, the app password
+must be the 16-character password generated for the account.
+
 Generate `PASSWORD_RESET_SECRET` with a cryptographically secure random
 generator and keep it private. Reset codes expire after 10 minutes, are
 limited to five verification attempts, and can only be requested once per

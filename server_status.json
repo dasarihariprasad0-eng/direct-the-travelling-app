@@ -1,0 +1,15 @@
+﻿{
+    "success":  true,
+    "data":  {
+                 "ok":  true,
+                 "database":  "sqlite",
+                 "ai_configured":  true,
+                 "ai_provider":  "gemini",
+                 "providers":  {
+                                   "gemini":  true,
+                                   "groq":  true,
+                                   "tavily":  true,
+                                   "openweather":  true
+                               }
+             }
+}

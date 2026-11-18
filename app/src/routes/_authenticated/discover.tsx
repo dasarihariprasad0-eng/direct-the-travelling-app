@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useLanguage } from "@/lib/language-context";
 
 export const Route = createFileRoute("/_authenticated/discover")({
   head: () => ({
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/_authenticated/discover")({
 });
 
 function DiscoverPage() {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [minScore, setMinScore] = useState(0);
   const [search, setSearch] = useState("");
@@ -47,11 +49,11 @@ function DiscoverPage() {
   const connectMutation = useMutation({
     mutationFn: (toUser: string) => sendConnection({ data: { toUser } }),
     onSuccess: () => {
-      toast.success("Connection request sent");
+      toast.success(t("Connection request sent"));
       queryClient.invalidateQueries({ queryKey: ["matches"] });
       queryClient.invalidateQueries({ queryKey: ["connections"] });
     },
-    onError: () => toast.error("Could not send that request."),
+    onError: () => toast.error(t("Could not send that request.")),
   });
 
   const respondMutation = useMutation({
@@ -61,7 +63,7 @@ function DiscoverPage() {
       queryClient.invalidateQueries({ queryKey: ["connections"] });
       queryClient.invalidateQueries({ queryKey: ["matches"] });
     },
-    onError: () => toast.error("Could not update that request."),
+    onError: () => toast.error(t("Could not update that request.")),
   });
 
   const incoming = (connections ?? []).filter((c) => !c.outgoing && c.status === "pending");
@@ -94,25 +96,26 @@ function DiscoverPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <p className="eyebrow">Traveler matching</p>
-      <h1 className="mt-2 text-3xl">Travelers who fit how you travel</h1>
+      <p className="eyebrow">{t("Traveler matching")}</p>
+      <h1 className="mt-2 text-3xl">{t("Travelers who fit how you travel")}</h1>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-        Scores compare your style, pace, budget, stays, climate, interests, activities and daily
-        habits. Every card shows what drove the number.
+        {t(
+          "Scores compare your style, pace, budget, stays, climate, interests, activities and daily habits. Every card shows what drove the number.",
+        )}
       </p>
 
       {isError && (
         <div role="alert" className="surface-card mt-6 p-5">
-          <p className="text-sm text-destructive">Could not load traveler matches.</p>
+          <p className="text-sm text-destructive">{t("Could not load traveler matches.")}</p>
           <Button variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>
-            Try again
+            {t("Try again")}
           </Button>
         </div>
       )}
 
       {incoming.length > 0 && (
         <section className="surface-card mt-8 p-5">
-          <h2 className="text-lg">Connection requests</h2>
+          <h2 className="text-lg">{t("Connection requests")}</h2>
           <div className="mt-4 space-y-3">
             {incoming.map((c) => (
               <div
@@ -120,20 +123,20 @@ function DiscoverPage() {
                 className="flex flex-wrap items-center gap-3 rounded-lg border border-border px-4 py-3"
               >
                 <span className="text-sm font-medium">{c.other?.display_name ?? "A traveler"}</span>
-                <span className="text-sm text-muted-foreground">wants to connect</span>
+                <span className="text-sm text-muted-foreground">{t("wants to connect")}</span>
                 <div className="ml-auto flex gap-2">
                   <Button
                     size="sm"
                     onClick={() => respondMutation.mutate({ id: c.id, status: "accepted" })}
                   >
-                    Accept
+                    {t("Accept")}
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => respondMutation.mutate({ id: c.id, status: "declined" })}
                   >
-                    Decline
+                    {t("Decline")}
                   </Button>
                 </div>
               </div>
@@ -145,7 +148,7 @@ function DiscoverPage() {
       <div className="mt-8 flex flex-wrap items-end gap-4">
         <div className="min-w-56 flex-1">
           <Input
-            placeholder="Search by name, city or interest"
+            placeholder={t("Search by name, city or interest")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -158,7 +161,7 @@ function DiscoverPage() {
               variant={minScore === v ? "default" : "outline"}
               onClick={() => setMinScore(v)}
             >
-              {v === 0 ? "All" : `${v}%+`}
+              {v === 0 ? t("All") : `${v}%+`}
             </Button>
           ))}
         </div>
@@ -166,25 +169,26 @@ function DiscoverPage() {
 
       {!data?.ready && (
         <div className="surface-card mt-6 p-6">
-          <h2 className="text-lg">Set your preferences first</h2>
+          <h2 className="text-lg">{t("Set your preferences first")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Matching needs your travel style, pace and interests before it can rank anyone.
+            {t("Matching needs your travel style, pace and interests before it can rank anyone.")}
           </p>
           <Button asChild className="mt-4">
-            <Link to="/profile">Fill in preferences</Link>
+            <Link to="/profile">{t("Fill in preferences")}</Link>
           </Button>
         </div>
       )}
 
       {data?.ready && filtered.length === 0 && (
         <div className="surface-card mt-6 p-6">
-          <h2 className="text-lg">No travelers to show yet</h2>
+          <h2 className="text-lg">{t("No travelers to show yet")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            As more people complete their profiles they will appear here, ranked against yours. In
-            the meantime you can start a group trip and let travelers find you.
+            {t(
+              "As more people complete their profiles they will appear here, ranked against yours. In the meantime you can start a group trip and let travelers find you.",
+            )}
           </p>
           <Button asChild className="mt-4">
-            <Link to="/trips">Start a group trip</Link>
+            <Link to="/trips">{t("Start a group trip")}</Link>
           </Button>
         </div>
       )}
@@ -208,7 +212,7 @@ function DiscoverPage() {
               <div className="ml-auto text-right">
                 <p className="font-display text-2xl leading-none text-primary">{match.score}%</p>
                 <p className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">
-                  match
+                  {t("match")}
                 </p>
               </div>
             </div>
@@ -224,10 +228,12 @@ function DiscoverPage() {
                 .slice(0, 4)
                 .map((b) => (
                   <div key={b.label} className="flex items-center gap-3">
-                    <span className="w-24 shrink-0 text-xs text-muted-foreground">{b.label}</span>
+                    <span className="w-24 shrink-0 text-xs text-muted-foreground">
+                      {t(b.label)}
+                    </span>
                     <Progress value={b.score} className="h-1.5 flex-1" />
                     <span className="w-28 shrink-0 truncate text-right text-xs text-muted-foreground">
-                      {b.detail}
+                      {t(b.detail)}
                     </span>
                   </div>
                 ))}
@@ -248,14 +254,14 @@ function DiscoverPage() {
                 <Button variant="outline" size="sm" disabled className="w-full">
                   {match.connection.status === "accepted" ? (
                     <>
-                      <Check className="mr-1.5 h-4 w-4" /> Connected
+                      <Check className="mr-1.5 h-4 w-4" /> {t("Connected")}
                     </>
                   ) : match.connection.status === "declined" ? (
-                    "Not connected"
+                    t("Not connected")
                   ) : (
                     <>
                       <Clock className="mr-1.5 h-4 w-4" />
-                      {match.connection.outgoing ? "Request sent" : "Awaiting your reply"}
+                      {t(match.connection.outgoing ? "Request sent" : "Awaiting your reply")}
                     </>
                   )}
                 </Button>
@@ -267,7 +273,7 @@ function DiscoverPage() {
                   onClick={() => connectMutation.mutate(match.profile.id)}
                 >
                   <UserPlus className="mr-1.5 h-4 w-4" />
-                  Send connection request
+                  {t("Send connection request")}
                 </Button>
               )}
             </div>

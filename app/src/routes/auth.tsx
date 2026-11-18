@@ -7,6 +7,8 @@ import { apiRequest, notifyAuthChange, setSessionToken, type AuthSession } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LanguageSwitcher } from "@/components/LanguageProvider";
+import { useLanguage } from "@/lib/language-context";
 
 type Search = { mode?: "signup" | "signin" };
 type ResetStep = "request" | "verify" | "new-password";
@@ -31,6 +33,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { mode } = Route.useSearch();
   const [isSignUp, setIsSignUp] = useState(mode === "signup");
@@ -85,7 +88,7 @@ function AuthPage() {
           auth: false,
           body: { email, reset_token: resetToken, password: newPassword },
         });
-        toast.success("Password updated. Sign in with your new password.");
+        toast.success(t("Password updated. Sign in with your new password."));
         setResetStep(null);
         setPassword("");
         setNewPassword("");
@@ -113,7 +116,7 @@ function AuthPage() {
         navigate({ to: "/dashboard", replace: true });
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Something went wrong.");
+      toast.error(error instanceof Error ? error.message : t("Something went wrong."));
     } finally {
       setBusy(false);
     }
@@ -126,6 +129,9 @@ function AuthPage() {
           <PlaneTakeoff className="h-5 w-5 text-primary" strokeWidth={2.2} />
           <span className="font-display text-lg tracking-tight">DIRECT</span>
         </Link>
+        <div className="ml-auto">
+          <LanguageSwitcher />
+        </div>
       </div>
 
       <main className="auth-main flex flex-1 items-center justify-center px-4 py-10">
@@ -133,35 +139,35 @@ function AuthPage() {
           <section className="auth-travel-image">
             <img
               src={heroImage}
-              alt="Travelers hiking a ridge trail above an alpine lake at sunrise"
+              alt={t("Travelers hiking a ridge trail above an alpine lake at sunrise")}
             />
             <div className="auth-travel-image-veil" />
             <div className="auth-travel-image-copy">
-              <p className="eyebrow">Go further, together</p>
-              <h2>Find your kind of journey.</h2>
+              <p className="eyebrow">{t("Go further, together")}</p>
+              <h2>{t("Find your kind of journey.")}</h2>
             </div>
           </section>
           <div className="surface-card auth-form-card w-full max-w-md p-7">
             <p className="eyebrow">
-              {resetStep ? "Account recovery" : isSignUp ? "New traveler" : "Welcome back"}
+              {t(resetStep ? "Account recovery" : isSignUp ? "New traveler" : "Welcome back")}
             </p>
             <h1 className="mt-2 text-2xl">
               {resetStep === "request"
-                ? "Reset your password"
+                ? t("Reset your password")
                 : resetStep === "verify"
-                  ? "Check your email"
+                  ? t("Check your email")
                   : resetStep === "new-password"
-                    ? "Choose a new password"
+                    ? t("Choose a new password")
                     : isSignUp
-                      ? "Create your DIRECT account"
-                      : "Sign in to DIRECT"}
+                      ? t("Create your DIRECT account")
+                      : t("Sign in to DIRECT")}
             </h1>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               {resetStep !== null ? (
                 <>
                   <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t("Email")}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -174,7 +180,7 @@ function AuthPage() {
                   </div>
                   {resetStep === "verify" && (
                     <div className="space-y-1.5">
-                      <Label htmlFor="reset-code">Six-digit verification code</Label>
+                      <Label htmlFor="reset-code">{t("Six-digit verification code")}</Label>
                       <Input
                         id="reset-code"
                         inputMode="numeric"
@@ -186,13 +192,13 @@ function AuthPage() {
                         onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                       />
                       <p className="text-sm text-muted-foreground">
-                        If an account exists, a code has been sent. It expires in 10 minutes.
+                        {t("If an account exists, a code has been sent. It expires in 10 minutes.")}
                       </p>
                     </div>
                   )}
                   {resetStep === "new-password" && (
                     <div className="space-y-1.5">
-                      <Label htmlFor="new-password">New password</Label>
+                      <Label htmlFor="new-password">{t("New password")}</Label>
                       <Input
                         id="new-password"
                         type="password"
@@ -210,19 +216,19 @@ function AuthPage() {
                 <>
                   {isSignUp && (
                     <div className="space-y-1.5">
-                      <Label htmlFor="name">Display name</Label>
+                      <Label htmlFor="name">{t("Display name")}</Label>
                       <Input
                         id="name"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="How your group sees you"
+                        placeholder={t("How your group sees you")}
                         autoComplete="name"
                         required
                       />
                     </div>
                   )}
                   <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t("Email")}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -233,7 +239,7 @@ function AuthPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t("Password")}</Label>
                     <Input
                       id="password"
                       type="password"
@@ -249,14 +255,14 @@ function AuthPage() {
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {resetStep === "request"
-                  ? "Send verification code"
+                  ? t("Send verification code")
                   : resetStep === "verify"
-                    ? "Verify code"
+                    ? t("Verify code")
                     : resetStep === "new-password"
-                      ? "Update password"
+                      ? t("Update password")
                       : isSignUp
-                        ? "Create account"
-                        : "Sign in"}
+                        ? t("Create account")
+                        : t("Sign in")}
               </Button>
             </form>
 
@@ -269,18 +275,18 @@ function AuthPage() {
                       className="text-foreground underline underline-offset-4"
                       onClick={() => setResetStep("request")}
                     >
-                      Forgot password?
+                      {t("Forgot password?")}
                     </button>
                   </p>
                 )}
                 <p className="mt-6 text-center text-sm text-muted-foreground">
-                  {isSignUp ? "Already have an account?" : "New to DIRECT?"}{" "}
+                  {t(isSignUp ? "Already have an account?" : "New to DIRECT?")}{" "}
                   <button
                     type="button"
                     className="text-foreground underline underline-offset-4"
                     onClick={() => setIsSignUp((v) => !v)}
                   >
-                    {isSignUp ? "Sign in" : "Create one"}
+                    {t(isSignUp ? "Sign in" : "Create one")}
                   </button>
                 </p>
               </>
@@ -296,7 +302,7 @@ function AuthPage() {
                     setNewPassword("");
                   }}
                 >
-                  Back to sign in
+                  {t("Back to sign in")}
                 </button>
               </p>
             )}

@@ -53,6 +53,17 @@ describe("route loading", () => {
     expect(existsSync("src/routes/__root.tsx")).toBe(true);
   });
 
+  it("publishes crawlable home-page metadata and a sitemap", () => {
+    const html = readFileSync("index.html", "utf8");
+    const robots = readFileSync("public/robots.txt", "utf8");
+    const sitemap = readFileSync("public/sitemap.xml", "utf8");
+
+    expect(html).toContain('name="robots" content="index, follow');
+    expect(html).toContain('rel="canonical" href="https://direct-the-travelling-app.onslate.in/"');
+    expect(robots).toContain("Sitemap: https://direct-the-travelling-app.onslate.in/sitemap.xml");
+    expect(sitemap).toContain("<loc>https://direct-the-travelling-app.onslate.in/</loc>");
+  });
+
   it("uses the local proxy and production API URL without Supabase auth", () => {
     const auth = readFileSync("src/routes/auth.tsx", "utf8");
     const api = readFileSync("src/lib/api.ts", "utf8");

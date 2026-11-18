@@ -152,16 +152,18 @@ async def _chat_gemini(
     json_mode: bool = False,
 ) -> str:
     """Generate a response using Gemini through LangChain."""
-    if not s.gemini_api_key:
+    key = (s.gemini_api_key or "").strip()
+    if not key:
         raise HTTPException(
             status_code=503,
             detail="GEMINI_API_KEY is not configured.",
         )
 
     try:
+        model = (s.gemini_model or "gemini-1.5-flash").strip()
         options = {
-            "model": "gemini-3.6-flash",
-            "google_api_key": s.gemini_api_key,
+            "model": model,
+            "google_api_key": key,
             "max_retries": 2,
         }
 
@@ -209,16 +211,18 @@ async def _chat_groq(
     json_mode: bool = False,
 ) -> str:
     """Generate a response using Groq through LangChain."""
-    if not s.groq_api_key:
+    key = (s.groq_api_key or "").strip()
+    if not key:
         raise HTTPException(
             status_code=503,
             detail="GROQ_API_KEY is not configured.",
         )
 
     try:
+        model = (s.groq_model or "openai/gpt-oss-20b").strip()
         options = {
-            "model": "openai/gpt-oss-20b",
-            "api_key": s.groq_api_key,
+            "model": model,
+            "api_key": key,
             "temperature": min(temperature, 0.2)
             if json_mode
             else temperature,
@@ -333,8 +337,8 @@ async def chat(
     )
 
     provider_keys = {
-        "gemini": settings.gemini_api_key,
-        "groq": settings.groq_api_key,
+        "gemini": (settings.gemini_api_key or "").strip(),
+        "groq": (settings.groq_api_key or "").strip(),
     }
 
     errors = []

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BedDouble, ExternalLink, Loader2, MapPin, Sparkles, Tag } from "lucide-react";
 import { BookingOptions } from "@/components/BookingOptions";
 import { recommendDestinations } from "@/lib/recommend.api";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ChipGroup } from "@/components/ChipGroup";
+import { useLanguage } from "@/lib/language-context";
 
 const EMPTY_RECOMMENDATIONS: Recommendation[] = [];
 
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/ideas")({
 });
 
 function IdeasPage() {
+  const { language, t } = useLanguage();
   const profile = useQuery({ queryKey: ["my-profile"], queryFn: getMyProfile });
   const [interests, setInterests] = useState("");
   const [budget, setBudget] = useState<string>(BUDGET_LEVELS[1]);
@@ -71,9 +73,17 @@ function IdeasPage() {
           travelers: Number(travelers),
           roomShare: Number(roomShare),
           preferredDestinations: profile.data?.preferences?.dream_destinations ?? [],
+          language,
         },
       }),
   });
+  const previousLanguage = useRef(language);
+  useEffect(() => {
+    if (previousLanguage.current === language) return;
+    previousLanguage.current = language;
+    setPlaceCategory("All");
+    if (mutation.data) mutation.mutate();
+  }, [language, mutation.data, mutation.mutate]);
 
   const amount = budgetAmount ? Number(budgetAmount) : null;
   const validAmount =
@@ -131,20 +141,21 @@ function IdeasPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <p className="eyebrow">Destination ideas</p>
-      <h1 className="mt-2 text-3xl">Where should your group go?</h1>
+      <p className="eyebrow">{t("Destination ideas")}</p>
+      <h1 className="mt-2 text-3xl">{t("Where should your group go?")}</h1>
       <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-        Tell us what you love, what you want to spend and when you can travel. Suggestions are a
-        starting point — check prices and conditions before booking.
+        {t(
+          "Tell us what you love, what you want to spend and when you can travel. Suggestions are a starting point — check prices and conditions before booking.",
+        )}
       </p>
       <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
-        Your interests, budget, timing, and group size are sent to Google Gemini to generate
-        suggestions. On its free tier, Google may use submitted content to improve its products;
-        don&apos;t include sensitive personal information.
+        {t(
+          "Your interests, budget, timing, and group size are sent to Google Gemini to generate suggestions. On its free tier, Google may use submitted content to improve its products; don’t include sensitive personal information.",
+        )}
       </p>
       {profile.isError ? (
         <p role="status" className="mt-2 text-xs text-muted-foreground">
-          Saved preferences couldn’t be loaded. You can still enter your trip details below.
+          {t("Saved preferences couldn’t be loaded. You can still enter your trip details below.")}
         </p>
       ) : null}
 
@@ -157,18 +168,20 @@ function IdeasPage() {
       >
         <div>
           <label className="text-sm font-medium" htmlFor="interests">
-            Interests
+            {t("Interests")}
           </label>
           <Textarea
             id="interests"
             className="mt-1.5"
-            placeholder="Hiking, local food, stargazing, a bit of nightlife…"
+            placeholder={t("Hiking, local food, stargazing, a bit of nightlife…")}
             value={interests}
             onChange={(e) => setInterests(e.target.value)}
           />
         </div>
         <div>
-          <p className="text-sm font-medium">Budget level (used when no amount is entered)</p>
+          <p className="text-sm font-medium">
+            {t("Budget level (used when no amount is entered)")}
+          </p>
           <div className="mt-1.5">
             <ChipGroup
               options={BUDGET_LEVELS}
@@ -179,7 +192,7 @@ function IdeasPage() {
         </div>
         <div>
           <label className="text-sm font-medium" htmlFor="budget-amount">
-            Maximum total budget per traveler (₹, whole trip)
+            {t("Maximum total budget per traveler (₹, whole trip)")}
           </label>
           <Input
             id="budget-amount"
@@ -189,35 +202,36 @@ function IdeasPage() {
             min={1}
             max={10_000_000}
             step={1}
-            placeholder="e.g. 15000"
+            placeholder={t("e.g. 15000")}
             value={budgetAmount}
             onChange={(event) => setBudgetAmount(event.target.value)}
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            Enter an amount to prioritize recommendations within that trip total, or leave it blank
-            to use the budget level above.
+            {t(
+              "Enter an amount to prioritize recommendations within that trip total, or leave it blank to use the budget level above.",
+            )}
           </p>
           {!validAmount && (
             <p role="alert" className="mt-1 text-xs text-destructive">
-              Enter a whole-rupee amount between ₹1 and ₹1,00,00,000.
+              {t("Enter a whole-rupee amount between ₹1 and ₹1,00,00,000.")}
             </p>
           )}
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="text-sm font-medium" htmlFor="timing">
-              Timing
+              {t("Timing")}
             </label>
             <Input
               id="timing"
               className="mt-1.5"
-              placeholder="e.g. 5 days in mid-October"
+              placeholder={t("e.g. 5 days in mid-October")}
               value={timing}
               onChange={(e) => setTiming(e.target.value)}
             />
           </div>
           <div>
-            <p className="text-sm font-medium">Group size (optional)</p>
+            <p className="text-sm font-medium">{t("Group size (optional)")}</p>
             <div className="mt-1.5">
               <ChipGroup
                 options={GROUP_SIZES}
@@ -228,7 +242,7 @@ function IdeasPage() {
           </div>
           <div>
             <label className="text-sm font-medium" htmlFor="trip-start-date">
-              Trip start date (optional)
+              {t("Trip start date (optional)")}
             </label>
             <Input
               id="trip-start-date"
@@ -238,14 +252,14 @@ function IdeasPage() {
               onChange={(event) => setStartDate(event.target.value)}
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Used to prefill hotel and travel searches.
+              {t("Used to prefill hotel and travel searches.")}
             </p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="text-sm font-medium" htmlFor="trip-nights">
-              Nights
+              {t("Nights")}
             </label>
             <Input
               id="trip-nights"
@@ -260,7 +274,7 @@ function IdeasPage() {
           </div>
           <div>
             <label className="text-sm font-medium" htmlFor="traveler-count">
-              Travelers
+              {t("Travelers")}
             </label>
             <Input
               id="traveler-count"
@@ -275,7 +289,7 @@ function IdeasPage() {
           </div>
           <div>
             <label className="text-sm font-medium" htmlFor="room-share">
-              People per room
+              {t("People per room")}
             </label>
             <Input
               id="room-share"
@@ -290,7 +304,7 @@ function IdeasPage() {
           </div>
           <div>
             <label className="text-sm font-medium" htmlFor="hotel-nightly-target">
-              Hotel target / room / night (₹)
+              {t("Hotel target / room / night (₹)")}
             </label>
             <Input
               id="hotel-nightly-target"
@@ -299,7 +313,7 @@ function IdeasPage() {
               min={1}
               max={1_000_000}
               step={1}
-              placeholder="Optional"
+              placeholder={t("Optional")}
               value={hotelBudgetPerNight}
               onChange={(event) => setHotelBudgetPerNight(event.target.value)}
             />
@@ -307,18 +321,19 @@ function IdeasPage() {
         </div>
         {!validTripSize ? (
           <p role="alert" className="text-xs text-destructive">
-            Enter 1–30 nights, 1–20 travelers, and a room-sharing count no greater than the group
-            size.
+            {t(
+              "Enter 1–30 nights, 1–20 travelers, and a room-sharing count no greater than the group size.",
+            )}
           </p>
         ) : null}
         {!validNightlyAmount ? (
           <p role="alert" className="text-xs text-destructive">
-            Enter a whole-rupee hotel target between ₹1 and ₹10,00,000.
+            {t("Enter a whole-rupee hotel target between ₹1 and ₹10,00,000.")}
           </p>
         ) : null}
         {profile.data?.preferences?.dream_destinations?.length ? (
           <p className="text-xs text-muted-foreground">
-            We’ll prioritize your saved dream destinations:{" "}
+            {t("We’ll prioritize your saved dream destinations:")}{" "}
             <strong>{profile.data.preferences.dream_destinations.join(", ")}</strong>
           </p>
         ) : null}
@@ -328,7 +343,7 @@ function IdeasPage() {
           ) : (
             <Sparkles className="mr-1.5 h-4 w-4" />
           )}
-          {mutation.isPending ? "Thinking through options…" : "Get recommendations"}
+          {mutation.isPending ? t("Thinking through options…") : t("Get recommendations")}
         </Button>
         {mutation.isError && (
           <p className="text-sm text-destructive">{(mutation.error as Error).message}</p>
@@ -339,24 +354,27 @@ function IdeasPage() {
         <>
           {mutation.data.budget_amount !== null && (
             <p className="mt-6 rounded-lg border border-border bg-secondary/60 px-4 py-3 text-sm">
-              Recommendations are tailored to a maximum of{" "}
+              {t("Recommendations are tailored to a maximum of")}{" "}
               <strong>
-                ₹{mutation.data.budget_amount.toLocaleString("en-IN")} per traveler for the whole
-                trip
+                ₹{mutation.data.budget_amount.toLocaleString("en-IN")}{" "}
+                {t("per traveler for the whole trip")}
               </strong>
               .
             </p>
           )}
           <section className="mt-8" aria-label="Recommended destinations">
             <div className="mb-4">
-              <p className="eyebrow">Picked for your trip</p>
-              <h2 className="mt-1 text-2xl">Places worth discovering</h2>
+              <p className="eyebrow">{t("Picked for your trip")}</p>
+              <h2 className="mt-1 text-2xl">{t("Places worth discovering")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Explore the highlights in each destination, then compare the trip details.
+                {t("Explore the highlights in each destination, then compare the trip details.")}
               </p>
             </div>
             {placeCategories.length > 1 ? (
-              <div className="destination-category-filter" aria-label="Filter places by category">
+              <div
+                className="destination-category-filter"
+                aria-label={t("Filter places by category")}
+              >
                 {placeCategories.map((category) => (
                   <Button
                     key={category}
@@ -384,27 +402,32 @@ function IdeasPage() {
                     <div
                       className={`destination-image destination-image-${index % 4}`}
                       role="img"
-                      aria-label={`Scenic travel view for ${r.destination}`}
+                      aria-label={t("Scenic travel view for {destination}").replace(
+                        "{destination}",
+                        r.destination,
+                      )}
                     >
                       <span className="destination-image-location">
                         <MapPin size={14} /> {r.region}
                       </span>
                       {bestValueDestination === r.destination ? (
                         <span className="destination-image-deal">
-                          <Tag size={13} /> Lowest estimated trip
+                          <Tag size={13} /> {t("Lowest estimated trip")}
                         </span>
                       ) : null}
                     </div>
                     <header className="destination-result-heading">
                       <div>
-                        <p className="eyebrow">DESTINATION {String(index + 1).padStart(2, "0")}</p>
+                        <p className="eyebrow">
+                          {t("DESTINATION")} {String(index + 1).padStart(2, "0")}
+                        </p>
                         <h3 className="mt-1 text-2xl">{r.destination}</h3>
                         <p className="mt-1 text-xs text-muted-foreground">{r.region}</p>
                       </div>
                       <div className="destination-match-tags">
                         {r.best_for.map((b) => (
                           <Badge key={b} variant="secondary">
-                            {b}
+                            {t(b)}
                           </Badge>
                         ))}
                       </div>
@@ -412,11 +435,16 @@ function IdeasPage() {
                     <p className="mt-3 text-sm">{r.why}</p>
                     <div className="destination-price-highlight">
                       <div>
-                        <p className="eyebrow">ESTIMATED TRIP COST · PER TRAVELER</p>
+                        <p className="eyebrow">{t("ESTIMATED TRIP COST · PER TRAVELER")}</p>
                         <strong>
-                          {estimate ? formatInrRange(estimate) : "Not enough sourced prices"}
+                          {estimate ? formatInrRange(estimate) : t("Not enough sourced prices")}
                         </strong>
-                        <span>For {nightsCount} nights · estimate, not a live quote</span>
+                        <span>
+                          {t("For {nights} nights · estimate, not a live quote").replace(
+                            "{nights}",
+                            String(nightsCount),
+                          )}
+                        </span>
                       </div>
                       <span aria-hidden="true">₹</span>
                     </div>
@@ -424,63 +452,91 @@ function IdeasPage() {
                       <div className="destination-section-heading">
                         <div>
                           <p className="eyebrow">
-                            {r.top_places?.length ? "LOCAL FAVORITES" : "TRIP HIGHLIGHTS"}
+                            {t(r.top_places?.length ? "LOCAL FAVORITES" : "TRIP HIGHLIGHTS")}
                           </p>
                           <h4>
-                            {r.top_places?.length ? "Best places to visit" : "Things to explore"}
+                            {t(r.top_places?.length ? "Best places to visit" : "Things to explore")}
                           </h4>
                         </div>
-                        <span>{topPlaces.length} highlights</span>
+                        <span>
+                          {topPlaces.length} {t("highlights")}
+                        </span>
                       </div>
                       {topPlaces.length ? (
                         <div className="destination-places-grid">
                           {topPlaces.map((place, placeIndex) => (
-                            <a
+                            <article
                               className="destination-place-card"
-                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name}, ${r.destination}`)}`}
                               key={`${place.name}-${placeIndex}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
                             >
                               <span className="destination-place-index">
                                 {String(placeIndex + 1).padStart(2, "0")}
                               </span>
                               <span className="destination-place-copy">
-                                <span className="destination-place-category">{place.category}</span>
+                                <span className="destination-place-category">
+                                  {t(place.category)}
+                                </span>
                                 <strong>{place.name}</strong>
                                 <span>{place.why_visit}</span>
+                                {place.sources?.length ? (
+                                  <span className="destination-place-sources">
+                                    {place.sources.map((source) => (
+                                      <a
+                                        key={source.url}
+                                        href={source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        <ExternalLink size={12} aria-hidden="true" />
+                                        <span>{source.title}</span>
+                                      </a>
+                                    ))}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">
+                                    {t("No direct source found for this place")}
+                                  </span>
+                                )}
                               </span>
-                              <ExternalLink size={15} aria-hidden="true" />
-                            </a>
+                              <a
+                                className="destination-place-map-link"
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name}, ${r.destination}`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <MapPin size={14} aria-hidden="true" />
+                                {t("Open map")}
+                              </a>
+                            </article>
                           ))}
                         </div>
                       ) : (
                         <p className="text-sm text-muted-foreground">
-                          No place highlights were returned for this destination.
+                          {t("No place highlights were returned for this destination.")}
                         </p>
                       )}
                     </section>
                     <dl className="mt-4 space-y-2 text-sm">
                       {r.estimated_total_per_person && (
                         <div>
-                          <dt className="eyebrow">Estimated trip total per traveler</dt>
+                          <dt className="eyebrow">{t("Estimated trip total per traveler")}</dt>
                           <dd className="text-muted-foreground">{r.estimated_total_per_person}</dd>
                         </div>
                       )}
                       <div>
-                        <dt className="eyebrow">Budget fit</dt>
+                        <dt className="eyebrow">{t("Budget fit")}</dt>
                         <dd className="text-muted-foreground">{r.budget_fit}</dd>
                       </div>
                       <div>
-                        <dt className="eyebrow">Timing</dt>
+                        <dt className="eyebrow">{t("Timing")}</dt>
                         <dd className="text-muted-foreground">{r.timing_note}</dd>
                       </div>
                       <div>
-                        <dt className="eyebrow">Try</dt>
+                        <dt className="eyebrow">{t("Try")}</dt>
                         <dd className="text-muted-foreground">{r.sample_activities.join(" · ")}</dd>
                       </div>
                       <div>
-                        <dt className="eyebrow">Watch out</dt>
+                        <dt className="eyebrow">{t("Watch out")}</dt>
                         <dd className="text-muted-foreground">{r.watch_out}</dd>
                       </div>
                     </dl>
@@ -500,11 +556,11 @@ function IdeasPage() {
                     />
                     {r.trip_plan?.length ? (
                       <section className="mt-5 border-t border-border pt-4">
-                        <h3 className="text-base font-medium">Day-by-day trip plan</h3>
+                        <h3 className="text-base font-medium">{t("Day-by-day trip plan")}</h3>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Prices are estimates, not live quotes. Hotel rates are per room per night;
-                          food and daily spend are per traveler. Daily spend includes an estimated
-                          shared-room cost.
+                          {t(
+                            "Prices are estimates, not live quotes. Hotel rates are per room per night; food and daily spend are per traveler. Daily spend includes an estimated shared-room cost.",
+                          )}
                         </p>
                         <div className="mt-3 space-y-3">
                           {r.trip_plan.map((day) => (
@@ -513,36 +569,37 @@ function IdeasPage() {
                               className="rounded-lg border border-border p-3"
                             >
                               <h4 className="font-medium">
-                                Day {day.day}: {day.title}
+                                {t("Day")} {day.day}: {day.title}
                               </h4>
                               <p className="mt-2 text-sm">
-                                <span className="font-medium">Stay:</span> {day.hotel_suggestion}{" "}
+                                <span className="font-medium">{t("Stay:")}</span>{" "}
+                                {day.hotel_suggestion}{" "}
                                 <span className="text-muted-foreground">({day.stay_area})</span>
                               </p>
                               <p className="mt-1 text-sm">
-                                <span className="font-medium">Room per night:</span>{" "}
+                                <span className="font-medium">{t("Room per night:")}</span>{" "}
                                 {day.estimated_room_rate_per_night}
                               </p>
                               <div className="mt-2 text-sm">
-                                <span className="font-medium">Nearby food:</span>
+                                <span className="font-medium">{t("Nearby food:")}</span>
                                 <ul className="ml-5 mt-1 list-disc text-muted-foreground">
                                   {day.nearby_food.map((food) => (
                                     <li
                                       key={`${food.place_or_cuisine}-${food.estimated_meal_price_per_person}`}
                                     >
                                       {food.place_or_cuisine} —{" "}
-                                      {food.estimated_meal_price_per_person} per person
+                                      {food.estimated_meal_price_per_person} {t("per person")}
                                     </li>
                                   ))}
                                 </ul>
                               </div>
                               <p className="mt-2 text-sm">
-                                <span className="font-medium">Activities:</span>{" "}
+                                <span className="font-medium">{t("Activities:")}</span>{" "}
                                 {day.activities.join(" · ")}
                               </p>
                               <p className="mt-1 text-sm">
                                 <span className="font-medium">
-                                  Estimated daily spend per traveler:
+                                  {t("Estimated daily spend per traveler:")}
                                 </span>{" "}
                                 {day.estimated_daily_spend_per_person}
                               </p>
@@ -552,8 +609,9 @@ function IdeasPage() {
                       </section>
                     ) : (
                       <p className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
-                        A day-by-day plan was not returned for this suggestion. Try generating ideas
-                        again for sourced hotel and food estimates.
+                        {t(
+                          "A day-by-day plan was not returned for this suggestion. Try generating ideas again for sourced hotel and food estimates.",
+                        )}
                       </p>
                     )}
                   </article>
@@ -563,7 +621,7 @@ function IdeasPage() {
           </section>
           {mutation.data.sources.length > 0 && (
             <section className="surface-card mt-6 p-5">
-              <h2 className="text-lg font-medium">Research sources</h2>
+              <h2 className="text-lg font-medium">{t("Research sources")}</h2>
               <ul className="mt-2 space-y-1 text-sm">
                 {mutation.data.sources.map((source) => (
                   <li key={source.url}>
@@ -586,7 +644,7 @@ function IdeasPage() {
   );
 }
 
-function getTopPlaces(recommendation: Recommendation) {
+function getTopPlaces(recommendation: Recommendation): NonNullable<Recommendation["top_places"]> {
   if (recommendation.top_places?.length) {
     const places = recommendation.top_places.filter(
       (place) => place.name.trim() && place.category.trim() && place.why_visit.trim(),

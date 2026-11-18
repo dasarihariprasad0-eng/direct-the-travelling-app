@@ -16,10 +16,20 @@ import psycopg
 from psycopg.rows import dict_row
 
 
-JSON_COLUMNS = {"interests", "activities", "dream_destinations", "packing_notes", "items", "payload"}
+JSON_COLUMNS = {
+    "interests",
+    "activities",
+    "dream_destinations",
+    "packing_notes",
+    "items",
+    "payload",
+    "split_members",
+    "destinations",
+}
 TABLES = {
     "profiles", "travel_preferences", "connection_requests", "trips", "trip_members",
     "itineraries", "itinerary_days", "trip_progress", "assistant_messages", "weather_snapshots", "web_sources",
+    "trip_votes", "trip_expenses", "trip_messages",
 }
 COLUMNS = {
     "profiles": {"id", "display_name", "home_city", "home_state", "bio", "avatar_url",
@@ -29,13 +39,13 @@ COLUMNS = {
                            "climate_preference", "hotel_budget_per_night", "interests", "activities", "smoking",
                            "drinking", "early_riser", "dream_destinations", "updated_at"},
     "connection_requests": {"id", "from_user", "to_user", "message", "status", "created_at"},
-    "trips": {"id", "owner_id", "title", "destination", "region", "country", "latitude",
+    "trips": {"id", "owner_id", "title", "destination", "destinations", "region", "country", "latitude",
               "longitude", "start_date", "end_date", "budget_level", "travel_style",
               "max_travelers", "description", "visibility", "status", "created_at", "updated_at"},
     "trip_members": {"id", "trip_id", "user_id", "role", "status", "joined_at"},
     "itineraries": {"id", "trip_id", "summary", "weather_overview", "packing_notes",
-                    "model", "created_at"},
-    "itinerary_days": {"id", "itinerary_id", "trip_id", "day_number", "day_date", "title",
+                    "model", "language", "created_at"},
+    "itinerary_days": {"id", "itinerary_id", "trip_id", "day_number", "day_date", "destination", "title",
                        "weather_summary", "weather_temp_high", "weather_temp_low",
                        "weather_code", "items", "created_at"},
     "trip_progress": {"id", "trip_id", "day_id", "user_id", "item_index", "done",
@@ -43,6 +53,12 @@ COLUMNS = {
     "assistant_messages": {"id", "trip_id", "user_id", "role", "content", "created_at"},
     "weather_snapshots": {"id", "trip_id", "forecast_date", "source", "payload", "created_at"},
     "web_sources": {"id", "trip_id", "query", "title", "url", "content", "created_at"},
+    "trip_votes": {"id", "trip_id", "day_id", "item_index", "user_id", "value", "updated_at"},
+    "trip_expenses": {
+        "id", "trip_id", "created_by", "paid_by", "title", "amount_inr",
+        "split_members", "created_at",
+    },
+    "trip_messages": {"id", "trip_id", "user_id", "content", "created_at"},
 }
 
 
@@ -138,7 +154,7 @@ def init_db() -> None:
         );
         CREATE TABLE IF NOT EXISTS trips (
           id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          title TEXT NOT NULL, destination TEXT NOT NULL, region TEXT,
+          title TEXT NOT NULL, destination TEXT NOT NULL, destinations TEXT NOT NULL DEFAULT '[]', region TEXT,
           country TEXT NOT NULL DEFAULT 'India', latitude REAL, longitude REAL,
           start_date TEXT NOT NULL, end_date TEXT NOT NULL, budget_level TEXT,
           travel_style TEXT, max_travelers INTEGER NOT NULL DEFAULT 6, description TEXT,
@@ -154,12 +170,12 @@ def init_db() -> None:
         CREATE TABLE IF NOT EXISTS itineraries (
           id TEXT PRIMARY KEY, trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
           summary TEXT, weather_overview TEXT, packing_notes TEXT NOT NULL DEFAULT '[]',
-          model TEXT, created_at TEXT NOT NULL
+          model TEXT, language TEXT NOT NULL DEFAULT 'en', created_at TEXT NOT NULL
         );
         CREATE TABLE IF NOT EXISTS itinerary_days (
           id TEXT PRIMARY KEY, itinerary_id TEXT NOT NULL REFERENCES itineraries(id) ON DELETE CASCADE,
           trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-          day_number INTEGER NOT NULL, day_date TEXT, title TEXT NOT NULL,
+          day_number INTEGER NOT NULL, day_date TEXT, destination TEXT NOT NULL DEFAULT '', title TEXT NOT NULL,
           weather_summary TEXT, weather_temp_high REAL, weather_temp_low REAL, weather_code INTEGER,
           items TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL,
           UNIQUE(itinerary_id, day_number)
@@ -185,17 +201,56 @@ def init_db() -> None:
           id TEXT PRIMARY KEY, trip_id TEXT REFERENCES trips(id) ON DELETE CASCADE,
           query TEXT NOT NULL, title TEXT, url TEXT, content TEXT, created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS trip_votes (
+          id TEXT PRIMARY KEY, trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+          day_id TEXT NOT NULL REFERENCES itinerary_days(id) ON DELETE CASCADE,
+          item_index INTEGER NOT NULL, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          value INTEGER NOT NULL CHECK (value IN (-1, 1)), updated_at TEXT NOT NULL,
+          UNIQUE(day_id, item_index, user_id)
+        );
+        CREATE TABLE IF NOT EXISTS trip_expenses (
+          id TEXT PRIMARY KEY, trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+          created_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          paid_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          title TEXT NOT NULL, amount_inr INTEGER NOT NULL CHECK (amount_inr > 0),
+          split_members TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS trip_messages (
+          id TEXT PRIMARY KEY, trip_id TEXT NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          content TEXT NOT NULL, created_at TEXT NOT NULL
+        );
+
         CREATE INDEX IF NOT EXISTS trips_start_idx ON trips(start_date);
         CREATE INDEX IF NOT EXISTS trip_members_user_idx ON trip_members(user_id);
         CREATE INDEX IF NOT EXISTS trip_days_idx ON itinerary_days(trip_id, day_number);
+        CREATE INDEX IF NOT EXISTS trip_votes_trip_idx ON trip_votes(trip_id, day_id);
+        CREATE INDEX IF NOT EXISTS trip_expenses_trip_idx ON trip_expenses(trip_id, created_at);
+        CREATE INDEX IF NOT EXISTS trip_messages_trip_idx ON trip_messages(trip_id, created_at);
+
         """
         if isinstance(db, sqlite3.Connection):
             db.executescript(schema)
             preference_columns = {
                 row["name"] for row in db.execute("PRAGMA table_info(travel_preferences)").fetchall()
             }
+            trip_columns = {
+                row["name"] for row in db.execute("PRAGMA table_info(trips)").fetchall()
+            }
+            day_columns = {
+                row["name"] for row in db.execute("PRAGMA table_info(itinerary_days)").fetchall()
+            }
+            itinerary_columns = {
+                row["name"] for row in db.execute("PRAGMA table_info(itineraries)").fetchall()
+            }
             if "hotel_budget_per_night" not in preference_columns:
                 db.execute("ALTER TABLE travel_preferences ADD COLUMN hotel_budget_per_night INTEGER")
+            if "destinations" not in trip_columns:
+                db.execute("ALTER TABLE trips ADD COLUMN destinations TEXT NOT NULL DEFAULT '[]'")
+            if "destination" not in day_columns:
+                db.execute("ALTER TABLE itinerary_days ADD COLUMN destination TEXT NOT NULL DEFAULT ''")
+            if "language" not in itinerary_columns:
+                db.execute("ALTER TABLE itineraries ADD COLUMN language TEXT NOT NULL DEFAULT 'en'")
         else:
             for statement in schema.split(";"):
                 if statement.strip():
@@ -204,6 +259,21 @@ def init_db() -> None:
                 db,
                 "ALTER TABLE travel_preferences "
                 "ADD COLUMN IF NOT EXISTS hotel_budget_per_night INTEGER",
+            )
+            _execute(
+                db,
+                "ALTER TABLE trips ADD COLUMN IF NOT EXISTS "
+                "destinations TEXT NOT NULL DEFAULT '[]'",
+            )
+            _execute(
+                db,
+                "ALTER TABLE itinerary_days ADD COLUMN IF NOT EXISTS "
+                "destination TEXT NOT NULL DEFAULT ''",
+            )
+            _execute(
+                db,
+                "ALTER TABLE itineraries ADD COLUMN IF NOT EXISTS "
+                "language TEXT NOT NULL DEFAULT 'en'",
             )
 
 
@@ -576,11 +646,14 @@ class Db:
                 data = self._encode(dict(record))
                 stamp = datetime.now(timezone.utc).isoformat()
                 if table in {"connection_requests", "trips", "trip_members", "itineraries",
-                             "itinerary_days", "trip_progress", "assistant_messages", "weather_snapshots", "web_sources"}:
+                             "itinerary_days", "trip_progress", "assistant_messages", "weather_snapshots",
+                             "web_sources", "trip_votes", "trip_expenses", "trip_messages"}:
                     data.setdefault("id", secrets.token_hex(16))
                 if table in {"connection_requests", "trips", "itineraries", "itinerary_days",
-                             "assistant_messages", "weather_snapshots", "web_sources"}:
+                             "assistant_messages", "weather_snapshots", "web_sources", "trip_expenses", "trip_messages"}:
                     data.setdefault("created_at", stamp)
+                if table == "trip_votes":
+                    data.setdefault("updated_at", stamp)
                 if table == "trips":
                     data.setdefault("updated_at", stamp)
                 if table == "trip_members":

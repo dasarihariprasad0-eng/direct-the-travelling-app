@@ -10,6 +10,7 @@ export type ItineraryItem = {
   location?: string;
   indoor?: boolean;
   cost_estimate?: string;
+  sources?: { title: string; url: string }[];
 };
 
 export type ProfileBundle = {
@@ -97,6 +98,7 @@ export type TripCard = {
   destination: string;
   start_date: string;
   end_date: string;
+  destinations?: string[];
   max_travelers: number;
   memberCount: number;
   isMember: boolean;
@@ -114,6 +116,7 @@ export type TripDetail = {
   };
   isMember: boolean;
   isOwner: boolean;
+  sources: { title: string; url: string }[];
   members: Array<{
     user_id: string;
     role: string;
@@ -125,11 +128,13 @@ export type TripDetail = {
     weather_overview: string | null;
     packing_notes: string[];
     model: string | null;
+    language: "en" | "hi" | "te";
   } | null;
   days: Array<{
     id: string;
     day_number: number;
     day_date: string | null;
+    destination: string;
     title: string;
     weather_summary: string | null;
     weather_temp_high: number | null;
@@ -140,12 +145,56 @@ export type TripDetail = {
   userId: string;
 };
 
+export type TripVoteSummary = {
+  day_id: string;
+  item_index: number;
+  up: number;
+  down: number;
+  my_vote: "up" | "down" | null;
+};
+
+export type TripExpense = {
+  id: string;
+  title: string;
+  amount_inr: number;
+  paid_by: string;
+  paid_by_name: string;
+  created_by: string;
+  created_by_name: string;
+  split_members: string[];
+  created_at: string;
+};
+
+export type TripBalance = {
+  user_id: string;
+  name: string;
+  balance_inr: number;
+};
+
+export type TripCollaboration = {
+  votes: TripVoteSummary[];
+  expenses: TripExpense[];
+  balances: TripBalance[];
+};
+
 export type AssistantMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
   created_at: string;
 };
+export type TripChatMessage = {
+  id: string;
+  trip_id: string;
+  user_id: string;
+  sender_name: string;
+  sender_avatar?: string | null | undefined;
+  sender_role: string;
+  content: string;
+  created_at: string;
+};
+
+
 
 export async function listTrips({ data }: DataInput<{ search?: string }>): Promise<TripCard[]> {
   const query = data.search ? `?search=${encodeURIComponent(data.search)}` : "";
@@ -165,6 +214,7 @@ export async function createTrip({
   end_date: string;
   max_travelers: number;
   visibility: "public" | "private";
+  destinations?: string[];
 }>): Promise<TripCard> {
   return apiRequest("/trips", { method: "POST", body: data });
 }
@@ -188,10 +238,27 @@ export async function getTrip({ data }: DataInput<{ tripId: string }>): Promise<
   return apiRequest<TripDetail>(`/trips/${encodeURIComponent(data.tripId)}`);
 }
 
+export async function getTripTranslations({
+  data,
+}: DataInput<{ tripId: string; language: "en" | "hi" | "te" }>): Promise<{
+  language: "en" | "hi" | "te";
+  translations: Record<string, string>;
+}> {
+  return apiRequest(
+    `/trips/${encodeURIComponent(data.tripId)}/translations?language=${data.language}`,
+  );
+}
+
 export async function generateItinerary({
   data,
-}: DataInput<{ tripId: string }>): Promise<{ ok: boolean; itineraryId: string }> {
-  return apiRequest(`/trips/${encodeURIComponent(data.tripId)}/itinerary`, { method: "POST" });
+}: DataInput<{ tripId: string; language: "en" | "hi" | "te" }>): Promise<{
+  ok: boolean;
+  itineraryId: string;
+}> {
+  return apiRequest(
+    `/trips/${encodeURIComponent(data.tripId)}/itinerary?language=${data.language}`,
+    { method: "POST" },
+  );
 }
 
 export async function toggleProgress({
@@ -203,6 +270,38 @@ export async function toggleProgress({
   });
 }
 
+export async function getTripCollaboration({
+  data,
+}: DataInput<{ tripId: string }>): Promise<TripCollaboration> {
+  return apiRequest(`/trips/${encodeURIComponent(data.tripId)}/collaboration`);
+}
+
+export async function voteOnItinerary({
+  data,
+}: DataInput<{
+  tripId: string;
+  dayId: string;
+  itemIndex: number;
+  value: "up" | "down" | "clear";
+}>): Promise<{ ok: boolean }> {
+  return apiRequest(`/trips/${encodeURIComponent(data.tripId)}/votes`, {
+    method: "POST",
+    body: { day_id: data.dayId, item_index: data.itemIndex, value: data.value },
+  });
+}
+
+export async function addTripExpense({
+  data,
+}: DataInput<{ tripId: string; title: string; amountInr: number }>): Promise<{
+  ok: boolean;
+  expense: TripExpense;
+}> {
+  return apiRequest(`/trips/${encodeURIComponent(data.tripId)}/expenses`, {
+    method: "POST",
+    body: { title: data.title, amount_inr: data.amountInr },
+  });
+}
+
 export async function getAssistantThread({
   data,
 }: DataInput<{ tripId: string }>): Promise<AssistantMessage[]> {
@@ -211,9 +310,27 @@ export async function getAssistantThread({
 
 export async function askAssistant({
   data,
-}: DataInput<{ tripId: string; message: string }>): Promise<{ answer: string }> {
+}: DataInput<{ tripId: string; message: string; language: "en" | "hi" | "te" }>): Promise<{
+  answer: string;
+}> {
   return apiRequest(`/trips/${encodeURIComponent(data.tripId)}/assistant`, {
     method: "POST",
-    body: { message: data.message },
+    body: { message: data.message, language: data.language },
   });
 }
+
+export async function listTripMessages({
+  data,
+}: DataInput<{ tripId: string }>): Promise<TripChatMessage[]> {
+  return apiRequest<TripChatMessage[]>(`/trips/${encodeURIComponent(data.tripId)}/messages`);
+}
+
+export async function sendTripMessage({
+  data,
+}: DataInput<{ tripId: string; content: string }>): Promise<TripChatMessage> {
+  return apiRequest<TripChatMessage>(`/trips/${encodeURIComponent(data.tripId)}/messages`, {
+    method: "POST",
+    body: { content: data.content },
+  });
+}
+

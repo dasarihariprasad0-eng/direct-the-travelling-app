@@ -77,6 +77,3 @@ def score_compatibility(me: dict, other: dict) -> dict:
         ],
     }
 
-
-
-    

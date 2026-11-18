@@ -1,3 +1,5 @@
+import { useLanguage } from "@/lib/language-context";
+
 type TravelPage = "discover" | "trips" | "ideas" | "profile";
 
 const PAGE_IMAGES: Record<TravelPage, { src: string; alt: string; caption: string }> = {
@@ -24,13 +26,14 @@ const PAGE_IMAGES: Record<TravelPage, { src: string; alt: string; caption: strin
 };
 
 export function TravelPageBanner({ page }: { page: TravelPage }) {
+  const { t } = useLanguage();
   const image = PAGE_IMAGES[page];
 
   return (
     <div className={`travel-page-banner travel-page-banner-${page}`}>
-      <img src={image.src} alt={image.alt} loading="lazy" />
+      <img src={image.src} alt={t(image.alt)} loading="lazy" />
       <div className="travel-page-banner-veil" />
-      <p>{image.caption}</p>
+      <p>{t(image.caption)}</p>
     </div>
   );
 }

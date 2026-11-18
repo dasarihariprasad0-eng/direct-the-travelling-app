@@ -26,6 +26,7 @@ import {
   SMOKING,
   TRAVEL_STYLES,
 } from "@/lib/travel-options";
+import { useLanguage } from "@/lib/language-context";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -94,6 +95,7 @@ const EMPTY: Form = {
 };
 
 function ProfilePage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Form>(EMPTY);
@@ -141,7 +143,7 @@ function ProfilePage() {
       saveMyProfile({
         data: {
           profile: {
-            display_name: form.display_name.trim() || "Traveler",
+            display_name: form.display_name.trim() || t("Traveler"),
             home_city: form.home_city || null,
             home_state: form.home_state || null,
             bio: form.bio || null,
@@ -173,12 +175,12 @@ function ProfilePage() {
         },
       }),
     onSuccess: () => {
-      toast.success("Preferences saved");
+      toast.success(t("Preferences saved"));
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       queryClient.invalidateQueries({ queryKey: ["matches"] });
       navigate({ to: "/discover" });
     },
-    onError: (error) => toast.error(error instanceof Error ? error.message : "Could not save."),
+    onError: (error) => toast.error(error instanceof Error ? error.message : t("Could not save.")),
   });
   const nightlyBudget = form.hotel_budget_per_night ? Number(form.hotel_budget_per_night) : null;
   const validNightlyBudget =
@@ -197,12 +199,12 @@ function ProfilePage() {
     return (
       <main className="mx-auto max-w-3xl px-4 py-10">
         <div role="alert" className="surface-card p-6">
-          <h1 className="text-xl">Could not load your preferences</h1>
+          <h1 className="text-xl">{t("Could not load your preferences")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Your saved profile has not been changed. Try loading it again.
+            {t("Your saved profile has not been changed. Try loading it again.")}
           </p>
           <Button variant="outline" className="mt-4" onClick={() => void refetch()}>
-            Try again
+            {t("Try again")}
           </Button>
         </div>
       </main>
@@ -211,19 +213,20 @@ function ProfilePage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
-      <p className="eyebrow">Your travel identity</p>
-      <h1 className="mt-2 text-3xl">Preferences</h1>
+      <p className="eyebrow">{t("Your travel identity")}</p>
+      <h1 className="mt-2 text-3xl">{t("Preferences")}</h1>
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
-        The more of this you fill in, the sharper your matches and group itineraries get. Only your
-        display name, home area, bio and travel preferences are visible to other travelers.
+        {t(
+          "The more of this you fill in, the sharper your matches and group itineraries get. Only your display name, home area, bio and travel preferences are visible to other travelers.",
+        )}
       </p>
 
       <div className="mt-8 space-y-6">
         <section className="surface-card p-6">
-          <h2 className="text-xl">About you</h2>
+          <h2 className="text-xl">{t("About you")}</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="display_name">Display name</Label>
+              <Label htmlFor="display_name">{t("Display name")}</Label>
               <Input
                 id="display_name"
                 value={form.display_name}
@@ -231,31 +234,33 @@ function ProfilePage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="home_city">Home city</Label>
+              <Label htmlFor="home_city">{t("Home city")}</Label>
               <Input
                 id="home_city"
                 value={form.home_city}
                 onChange={(e) => setForm({ ...form, home_city: e.target.value })}
-                placeholder="Denver"
+                placeholder={t("Denver")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="home_state">State</Label>
+              <Label htmlFor="home_state">{t("State")}</Label>
               <Input
                 id="home_state"
                 value={form.home_state}
                 onChange={(e) => setForm({ ...form, home_state: e.target.value })}
-                placeholder="Colorado"
+                placeholder={t("Colorado")}
               />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="bio">Short bio</Label>
+              <Label htmlFor="bio">{t("Short bio")}</Label>
               <Textarea
                 id="bio"
                 rows={3}
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                placeholder="What kind of trips you love, and what you are looking for in a group."
+                placeholder={t(
+                  "What kind of trips you love, and what you are looking for in a group.",
+                )}
               />
             </div>
           </div>
@@ -278,43 +283,43 @@ function ProfilePage() {
         </section>
 
         <section className="surface-card space-y-5 p-6">
-          <h2 className="text-xl">How you travel</h2>
-          <Field label="Travel style">
+          <h2 className="text-xl">{t("How you travel")}</h2>
+          <Field label={t("Travel style")}>
             <ChipGroup
               options={TRAVEL_STYLES}
               value={form.travel_style}
               onChange={(v) => setForm({ ...form, travel_style: v as string })}
             />
           </Field>
-          <Field label="Preferred pace">
+          <Field label={t("Preferred pace")}>
             <ChipGroup
               options={PACES}
               value={form.pace}
               onChange={(v) => setForm({ ...form, pace: v as string })}
             />
           </Field>
-          <Field label="Budget level">
+          <Field label={t("Budget level")}>
             <ChipGroup
               options={BUDGET_LEVELS}
               value={form.budget_level}
               onChange={(v) => setForm({ ...form, budget_level: v as string })}
             />
           </Field>
-          <Field label="Preferred group size">
+          <Field label={t("Preferred group size")}>
             <ChipGroup
               options={GROUP_SIZES}
               value={form.group_size}
               onChange={(v) => setForm({ ...form, group_size: v as string })}
             />
           </Field>
-          <Field label="Group composition">
+          <Field label={t("Group composition")}>
             <ChipGroup
               options={GENDER_COMPOSITIONS}
               value={form.gender_composition}
               onChange={(v) => setForm({ ...form, gender_composition: v as string })}
             />
           </Field>
-          <Field label="Where you like to stay">
+          <Field label={t("Where you like to stay")}>
             <ChipGroup
               options={ACCOMMODATIONS}
               value={form.accommodation}
@@ -323,7 +328,7 @@ function ProfilePage() {
           </Field>
           <div className="space-y-1.5">
             <Label htmlFor="hotel-budget-per-night">
-              Preferred hotel budget per room, per night (₹)
+              {t("Preferred hotel budget per room, per night (₹)")}
             </Label>
             <Input
               id="hotel-budget-per-night"
@@ -334,27 +339,28 @@ function ProfilePage() {
               step={500}
               value={form.hotel_budget_per_night}
               onChange={(event) => setForm({ ...form, hotel_budget_per_night: event.target.value })}
-              placeholder="e.g. 3500"
+              placeholder={t("e.g. 3500")}
               aria-invalid={!validNightlyBudget}
             />
             <p className="text-xs text-muted-foreground">
-              Optional nightly target for a room. Destination estimates will be compared with it;
-              actual hotel rates vary by date and availability.
+              {t(
+                "Optional nightly target for a room. Destination estimates will be compared with it; actual hotel rates vary by date and availability.",
+              )}
             </p>
             {!validNightlyBudget ? (
               <p role="alert" className="text-xs text-destructive">
-                Enter a whole-rupee amount between ₹1 and ₹10,00,000.
+                {t("Enter a whole-rupee amount between ₹1 and ₹10,00,000.")}
               </p>
             ) : null}
           </div>
-          <Field label="Food">
+          <Field label={t("Food")}>
             <ChipGroup
               options={FOOD_PREFERENCES}
               value={form.food_preference}
               onChange={(v) => setForm({ ...form, food_preference: v as string })}
             />
           </Field>
-          <Field label="Climate you enjoy">
+          <Field label={t("Climate you enjoy")}>
             <ChipGroup
               options={CLIMATE_PREFERENCES}
               value={form.climate_preference}
@@ -364,8 +370,8 @@ function ProfilePage() {
         </section>
 
         <section className="surface-card space-y-5 p-6">
-          <h2 className="text-xl">Interests and habits</h2>
-          <Field label="Interests">
+          <h2 className="text-xl">{t("Interests and habits")}</h2>
+          <Field label={t("Interests")}>
             <ChipGroup
               multi
               options={INTERESTS}
@@ -373,7 +379,7 @@ function ProfilePage() {
               onChange={(v) => setForm({ ...form, interests: v as string[] })}
             />
           </Field>
-          <Field label="Activities you want on the plan">
+          <Field label={t("Activities you want on the plan")}>
             <ChipGroup
               multi
               options={ACTIVITIES}
@@ -381,14 +387,14 @@ function ProfilePage() {
               onChange={(v) => setForm({ ...form, activities: v as string[] })}
             />
           </Field>
-          <Field label="Smoking">
+          <Field label={t("Smoking")}>
             <ChipGroup
               options={SMOKING}
               value={form.smoking}
               onChange={(v) => setForm({ ...form, smoking: v as string })}
             />
           </Field>
-          <Field label="Drinking">
+          <Field label={t("Drinking")}>
             <ChipGroup
               options={DRINKING}
               value={form.drinking}
@@ -397,9 +403,9 @@ function ProfilePage() {
           </Field>
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-3">
             <div>
-              <p className="text-sm font-medium">Early riser</p>
+              <p className="text-sm font-medium">{t("Early riser")}</p>
               <p className="text-xs text-muted-foreground">
-                Helps match you with groups that keep similar hours.
+                {t("Helps match you with groups that keep similar hours.")}
               </p>
             </div>
             <Switch
@@ -408,14 +414,14 @@ function ProfilePage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="dreams">Dream destinations</Label>
+            <Label htmlFor="dreams">{t("Dream destinations")}</Label>
             <Input
               id="dreams"
               value={destinationText}
               onChange={(e) => setDestinationText(e.target.value)}
-              placeholder="Zion, Big Sur, New Orleans"
+              placeholder={t("Zion, Big Sur, New Orleans")}
             />
-            <p className="text-xs text-muted-foreground">Separate with commas.</p>
+            <p className="text-xs text-muted-foreground">{t("Separate with commas.")}</p>
           </div>
         </section>
 
@@ -426,7 +432,7 @@ function ProfilePage() {
             size="lg"
           >
             {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save preferences
+            {t("Save preferences")}
           </Button>
         </div>
       </div>
@@ -435,9 +441,10 @@ function ProfilePage() {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const { t } = useLanguage();
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium">{label}</p>
+      <p className="text-sm font-medium">{t(label)}</p>
       {children}
     </div>
   );

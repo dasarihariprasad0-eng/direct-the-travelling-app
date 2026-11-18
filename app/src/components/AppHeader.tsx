@@ -15,6 +15,8 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { apiRequest, clearSessionToken, notifyAuthChange } from "@/lib/api";
+import { LanguageSwitcher } from "@/components/LanguageProvider";
+import { useLanguage } from "@/lib/language-context";
 
 const WORKSPACE_NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -24,6 +26,7 @@ const WORKSPACE_NAV = [
 ] as const;
 
 export function AppHeader() {
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { profile } = useRouteContext({ from: "/_authenticated" });
@@ -81,7 +84,7 @@ export function AppHeader() {
           <span className="app-workspace-dot" />
         </div>
 
-        <p className="app-nav-label">Workspace</p>
+        <p className="app-nav-label">{t("Workspace")}</p>
         <nav className="app-nav" aria-label="Main navigation">
           {WORKSPACE_NAV.map((item) => (
             <Link
@@ -93,7 +96,7 @@ export function AppHeader() {
               onClick={() => setOpen(false)}
             >
               <item.icon size={17} />
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
             </Link>
           ))}
         </nav>
@@ -107,7 +110,7 @@ export function AppHeader() {
             onClick={() => setOpen(false)}
           >
             <Users size={17} />
-            <span>Travel preferences</span>
+            <span>{t("Travel preferences")}</span>
           </Link>
         </nav>
 
@@ -136,7 +139,7 @@ export function AppHeader() {
             onClick={() => void signOut()}
           >
             <LogOut size={16} />
-            <span>Sign out</span>
+            <span>{t("Sign out")}</span>
           </button>
         </div>
       </aside>
@@ -153,18 +156,19 @@ export function AppHeader() {
         <div className="app-breadcrumb">
           <span>Workspace</span>
           <span aria-hidden="true">/</span>
-          <strong>{pageLabel}</strong>
+          <strong>{t(pageLabel)}</strong>
         </div>
         <div className="app-topbar-actions">
+          <LanguageSwitcher />
           <Link to="/trips" className="app-search">
             <Search size={15} />
-            <span>Find a trip</span>
+            <span>{t("Find a trip")}</span>
             <kbd>/</kbd>
           </Link>
           <span className="app-topbar-divider" />
           <span className="app-date">
             <CalendarDays size={14} />
-            {new Intl.DateTimeFormat("en", {
+            {new Intl.DateTimeFormat(language, {
               weekday: "short",
               month: "short",
               day: "numeric",

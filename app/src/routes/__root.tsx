@@ -3,6 +3,7 @@ import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/r
 import { useEffect } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
+import { LanguageProvider } from "@/components/LanguageProvider";
 import heroImage from "@/assets/hero-alpine.jpg";
 
 function NotFoundComponent() {
@@ -113,9 +114,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <Toaster />
+      <LanguageProvider>
+        <Outlet />
+        <Toaster />
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
